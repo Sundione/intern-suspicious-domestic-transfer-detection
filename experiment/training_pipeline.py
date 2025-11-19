@@ -3,7 +3,7 @@ import pandas as pd
 import joblib
 from adapter.embedding.base import BaseGoogleEmbedding
 from experiment.training_schema import TRAIN_SCHEMA
-from experiment import tx_type_const
+from const import tx_type_const
 from xgboost import XGBClassifier
 
 
