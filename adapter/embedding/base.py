@@ -56,12 +56,12 @@ class BaseGoogleEmbedding:
             total_time = end_time - start_time
             print(f"Google Embedding : \t\tTook {total_time:.4f} seconds")
 
-            if not result.embedding or len(result.embedding) != len(input_texts):
+            if not result.embeddings or len(result.embeddings) != len(input_texts):
                 raise InvalidEmbeddingClientResponse(
                     "Mismatched length of embeddings received from API."
                 )
 
-            embeds = [e.values for e in result.embedding]
+            embeds = [e.values for e in result.embeddings]
             for vec in embeds:
                 if len(vec) != output_dimension:
                     raise InvalidEmbeddingClientResponse(
