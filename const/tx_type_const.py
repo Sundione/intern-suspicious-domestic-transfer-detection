@@ -7,6 +7,20 @@ TRANS_TYPE_QR_TRANSFER = "QR_TRANSFER"
 TRANS_TYPE_PAYMENT = "PAYMENT"
 TRANS_TYPE_REVERSAL = "REVERSAL"
 
+PAYMENT_MERCHANT_APP_CODE = [
+    "TTK2018user",
+    "TTK2020user",
+    "t2papiusr",
+    "promptpay_tag30",
+    "DCB",
+]
+QR_TRANSFER_MERCHANT_APP_CODE = ["promptpay_tag29"]
+TRANSFER_MERCHANT_APP_CODE = ["VisaDirect", "Wise"]
+FILTER_CHANNEL_PATTERN_WITHDRAW = r"ถอนเงินออกจากบัญชี"
+FILTER_CHANNEL_PATTERN_TOPUP = r"เติมเงิน"
+FILTER_CHANNEL_PATTERN_INTERNAL_TRANSFER = r"Transfer to wallet|ทำการโอนเงินให้"
+FILTER_CHANNEL_PATTERN_RECEIVE_TRANSFER = r"Receive from wallet|DeepPocket Transfer"
+
 TX_TYPE_CH = "CH"
 TX_TYPE_CTU = "CTU"
 TX_TYPE_TU = "TU"

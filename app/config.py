@@ -6,6 +6,8 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     ENV: Optional[str] = "development"
+    GEMINI_EMBEDDING_API_KEY: str
+    GEMINI_EMBEDDING_MODEL: str = "gemini-embedding-001"
     AI_LOGGING_SERVICE_CODE: Optional[str] = "FRAUD_SCAMMER_DETECTION"
     SDTD_CLF_PREDICTION_THRESHOLD: float = 0.5
 

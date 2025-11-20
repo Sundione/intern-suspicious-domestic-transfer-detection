@@ -3,11 +3,7 @@ import logging
 from typing import Optional, List
 from google import genai
 from google.genai import types
-from google.genai.errors import APIError
-from adapter.embedding.model.exception import (
-    InvalidEmbeddingInput,
-    InvalidEmbeddingClientResponse,
-)
+from adapter.embedding.model.exception import InvalidEmbeddingClientResponse
 
 
 class BaseGoogleEmbedding:
@@ -31,16 +27,12 @@ class BaseGoogleEmbedding:
 
     def embedding(
         self,
-        input_texts: List[str],
+        input_texts: str | List[str],
         task_type: str = "CLASSIFICATION",
         output_dimension: int = 128,
     ):
-        if not isinstance(input_texts, list) or len(input_texts) == 0:
-            raise InvalidEmbeddingInput(
-                "Input text must be list and cannot be empty list."
-            )
-        if not all(isinstance(t, str) for t in input_texts):
-            raise InvalidEmbeddingInput("All items in the input list must be strings.")
+        if isinstance(input_texts, str):
+            input_texts = [input_texts]
         try:
             start_time = time.perf_counter()
 
@@ -68,13 +60,6 @@ class BaseGoogleEmbedding:
                         f"Embedding dimension mismatch: expected {output_dimension}, got {len(vec)}"
                     )
             return embeds
-
-        except APIError as e:
-            print(f"Google Embedding API Error : {e}")
-            raise
-
-        except (InvalidEmbeddingInput, InvalidEmbeddingClientResponse):
-            raise
 
         except Exception as e:
             print(f"Google Embedding Error : {e}")

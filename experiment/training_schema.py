@@ -15,7 +15,6 @@ TRAIN_SCHEMA = DataFrameSchema(
         "imerchantid": Column(pa.Int, nullable=True),
         "nendingbalance": Column(pa.Float),
         "vappcode": Column(pa.String, nullable=True),
-        "sub_type": Column(pa.String, nullable=True),
         "is_fraud": Column(pa.Float),
     }
 )
