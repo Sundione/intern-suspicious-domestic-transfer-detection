@@ -1,0 +1,2 @@
+class InvalidGoogleEmbeddingResponse(Exception):
+    pass
