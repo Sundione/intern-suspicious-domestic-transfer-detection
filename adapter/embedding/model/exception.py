@@ -1,2 +1,2 @@
-class InvalidEmbeddingClientResponse(Exception):
+class InvalidGoogleEmbeddingResponse(Exception):
     pass

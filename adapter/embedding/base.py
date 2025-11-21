@@ -3,7 +3,7 @@ import logging
 from typing import Optional, List
 from google import genai
 from google.genai import types
-from adapter.embedding.model.exception import InvalidEmbeddingClientResponse
+from adapter.embedding.model.exception import InvalidGoogleEmbeddingResponse
 
 
 class BaseGoogleEmbedding:
@@ -19,11 +19,11 @@ class BaseGoogleEmbedding:
         self.client = genai.Client(
             api_key=self.embedding_api_key,
         )
-        print(f"Init Google Embedding with model : {embedding_model}")
         if logger is None:
             self.logger = logging.getLogger(__name__)
         else:
             self.logger = logger
+        self.logger.info(f"Init Google Embedding with model : {embedding_model}")
 
     def embedding(
         self,
@@ -46,21 +46,21 @@ class BaseGoogleEmbedding:
 
             end_time = time.perf_counter()
             total_time = end_time - start_time
-            print(f"Google Embedding : \t\tTook {total_time:.4f} seconds")
+            self.logger.info(f"Google Embedding : \t\tTook {total_time:.4f} seconds")
 
             if not result.embeddings or len(result.embeddings) != len(input_texts):
-                raise InvalidEmbeddingClientResponse(
+                raise InvalidGoogleEmbeddingResponse(
                     "Mismatched length of embeddings received from API."
                 )
 
             embeds = [e.values for e in result.embeddings]
             for vec in embeds:
                 if len(vec) != output_dimension:
-                    raise InvalidEmbeddingClientResponse(
+                    raise InvalidGoogleEmbeddingResponse(
                         f"Embedding dimension mismatch: expected {output_dimension}, got {len(vec)}"
                     )
             return embeds
 
         except Exception as e:
-            print(f"Google Embedding Error : {e}")
+            self.logger.info(f"Google Embedding Error : {e}")
             raise

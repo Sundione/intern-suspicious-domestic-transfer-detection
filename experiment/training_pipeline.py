@@ -2,9 +2,8 @@ import os
 import pandas as pd
 import numpy as np
 import joblib
-from typing import Optional, List
 from adapter.embedding.base import BaseGoogleEmbedding
-from experiment.suspicious_domestic_transfer_helper import SDTDHelper
+from domain.suspicious_domestic_transfer_detection.sdtd_helper import SDTDHelper
 from experiment.training_schema import TRAIN_SCHEMA
 from xgboost import XGBClassifier
 
@@ -12,18 +11,17 @@ from xgboost import XGBClassifier
 class TrainingPipeline:
     SDTD_CLF_DIR = os.path.dirname(os.path.abspath(__file__))
     SDTD_CLF_MODEL_PATH = os.path.join(SDTD_CLF_DIR, "xgboost_model.joblib")
-    HELPER = SDTDHelper()
 
     def __init__(
         self,
-        embedding_api_key: str,
-        embedding_model: Optional[str] = "gemini-embedding-001",
-        threshold: float = 0.7,
+        texts_embedding_model: BaseGoogleEmbedding,
+        helper: SDTDHelper,
+        threshold: float = 0.5,
         target: str = "is_fraud",
     ):
         self.target = target
-        self.embedding_api_key = embedding_api_key
-        self.embedding_model = embedding_model
+        self.texts_embedding_model = texts_embedding_model
+        self.helper = helper
         self.threshold = threshold
 
     def _load_data(self, path: str = None):
@@ -32,14 +30,9 @@ class TrainingPipeline:
         return data
 
     def _embedding_data(self, data: pd.DataFrame):
-        texts_embedding_model = BaseGoogleEmbedding(
-            embedding_api_key=self.embedding_api_key,
-            embedding_model=self.embedding_model,
-        )
-
         # if embedding have limit, need to batch process
         texts = data["texts"].tolist()
-        texts_embedding = texts_embedding_model.embedding(
+        texts_embedding = self.texts_embedding_model.embedding(
             input_texts=texts,
         )
 
@@ -107,8 +100,8 @@ class TrainingPipeline:
     def training_pipeline(self, train_data_path: str, test_data_path: str):
         train_data = self._load_data(train_data_path)
         print("Loaded Train Data")
-        processed_train_data = self.HELPER.preprocess_data(
-            train_data, perform_snapshot=True
+        processed_train_data = self.helper.preprocess_data(
+            train_data, split_domestic_iteration=True
         )
         print("Processed Train Data (with snapshots)")
         embeded_train_data = self._embedding_data(processed_train_data)
@@ -117,7 +110,7 @@ class TrainingPipeline:
 
         test_data = self._load_data(test_data_path)
         print("Loaded Test Data")
-        processed_test_data = self.HELPER.preprocess_data(test_data)
+        processed_test_data = self.helper.preprocess_data(test_data)
         print("Processed Test Data")
         embeded_test_data = self._embedding_data(processed_test_data)
         print("Test Data Embeded\n")

@@ -1,39 +1,39 @@
 import joblib
 import os
 import pandas as pd
+import logging
 from typing import Optional
 from adapter.embedding.base import BaseGoogleEmbedding
-from experiment.suspicious_domestic_transfer_helper import SDTDHelper
+from domain.suspicious_domestic_transfer_detection.sdtd_helper import SDTDHelper
 
 
 class SuspiciousDomesticTransferDetector:
     SDTD_CLF_DIR = os.path.dirname(os.path.abspath(__file__))
     SDTD_CLF_MODEL_PATH = os.path.join(SDTD_CLF_DIR, "xgboost_model.joblib")
-    HELPER = SDTDHelper()
 
     def __init__(
         self,
-        embedding_api_key: str,
-        embedding_model: Optional[str] = "gemini-embedding-001",
+        texts_embedding_model: BaseGoogleEmbedding,
+        helper: SDTDHelper,
         prediction_threshold: float = 0.5,
+        logger: Optional[logging.Logger] = None,
     ):
-        self.embedding_api_key = embedding_api_key
-        self.embedding_model = embedding_model
+        self.texts_embedding_model = texts_embedding_model
+        self.helper = helper
         self.prediction_threshold = prediction_threshold
         self.classification_model = self._load_classification_model()
+        if logger is None:
+            self.logger = logging.getLogger(__name__)
+        else:
+            self.logger = logger
 
     def _load_classification_model(self):
         classification_model = joblib.load(self.SDTD_CLF_MODEL_PATH)
         return classification_model
 
     def _embedding_data(self, data: pd.DataFrame):
-        texts_embedding_model = BaseGoogleEmbedding(
-            embedding_api_key=self.embedding_api_key,
-            embedding_model=self.embedding_model,
-        )
-
         texts = data["texts"].tolist()
-        texts_embeded = texts_embedding_model.embedding(
+        texts_embeded = self.texts_embedding_model.embedding(
             input_texts=texts,
         )
 
@@ -43,26 +43,26 @@ class SuspiciousDomesticTransferDetector:
         )
 
     def detect(self, data):
-        preprocessed_data = self.HELPER.preprocess_data(data)
-        print(f"Data preprocessed :\n{preprocessed_data}")
+        preprocessed_data = self.helper.preprocess_data(data)
+        self.logger.info(f"Data preprocessed :\n{preprocessed_data}")
 
         embeded_data = self._embedding_data(preprocessed_data)
-        print(f"Data Embeded :\n{embeded_data}")
+        self.logger.info(f"Data Embeded :\n{embeded_data}")
 
         model_input = embeded_data[
             self.classification_model.get_booster().feature_names
         ]
-        print(f"Model input :\n{model_input}")
+        self.logger.info(f"Model input :\n{model_input}")
 
         suspicious_score = float(
             self.classification_model.predict_proba(model_input)[:, 1][0]
         )
-        print(f"Prediction with threshold : {self.prediction_threshold}")
-        print(f"Prediction score calculated : {suspicious_score:.4f}")
+        self.logger.info(f"Prediction with threshold : {self.prediction_threshold}")
+        self.logger.info(f"Prediction score calculated : {suspicious_score:.4f}")
 
         is_suspicious = suspicious_score >= self.prediction_threshold
-        print(f"Prediction is_suspicious : {is_suspicious}")
-        print(
+        self.logger.info(f"Prediction is_suspicious : {is_suspicious}")
+        self.logger.info(
             f"Prediction result = 'is_suspicious' : {is_suspicious}, 'suspicious_score': {suspicious_score:.4f}"
         )
         return is_suspicious, suspicious_score

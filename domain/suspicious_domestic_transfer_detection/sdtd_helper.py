@@ -1,9 +1,16 @@
 import pandas as pd
 from const import tx_type_const
-from typing import List
+from typing import List, Optional
+import logging
 
 
 class SDTDHelper:
+
+    def __init__(self, logger: Optional[logging.Logger] = None):
+        if logger is None:
+            self.logger = logging.getLogger(__name__)
+        else:
+            self.logger = logger
 
     def _sub_type(
         self,
@@ -52,7 +59,7 @@ class SDTDHelper:
         elif (transaction["vcodetype"]) == tx_type_const.TX_TYPE_CTU:
             return tx_type_const.TRANS_TYPE_REVERSAL
 
-    def _qr_withdraw_snapshot(
+    def _split_domestic_transfer_iteration(
         self,
         transaction: pd.DataFrame,
         filter_col: str = "sub_type",
@@ -125,18 +132,20 @@ class SDTDHelper:
     def preprocess_data(
         self,
         data: pd.DataFrame,
-        perform_snapshot: bool = False,
+        split_domestic_iteration: bool = False,
         group_col: str = "profile_id",
         target="is_fraud",
     ):
+        self.logger.info("Preprocess Data")
         data["sub_type"] = data.apply(self._sub_type, axis=1)
+        self.logger.info("Sub-Type Mapped.")
 
         data["dtcreate"] = pd.to_datetime(data["dtcreate"])
-        data["register_date"] = pd.to_datetime(data["register_date"])
         data = data.sort_values(["profile_id", "dtcreate"])
 
-        if perform_snapshot:
-            data = self._qr_withdraw_snapshot(data)
+        if split_domestic_iteration:
+            data = self._split_domestic_transfer_iteration(data)
+            self.logger.info("Split Domestic Transfer Iteration.")
             group_col = "profile_ref"
 
         grouped_list = []
@@ -153,5 +162,6 @@ class SDTDHelper:
                 result_dict[target] = is_fraud
 
             grouped_list.append(result_dict)
+        self.logger.info("Transform Transaction to Texts for Embedding.")
 
         return pd.DataFrame(grouped_list)
